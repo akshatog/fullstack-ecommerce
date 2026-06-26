@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String?
+  email     String    @unique
+  password  String?
+  provider  String    @default("email")
+  orders    Order[]
+  addresses Address[]
+  reviews   Review[]
+  createdAt DateTime  @default(now())
+}
+
+model Address {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  email     String
+  address   String
+  city      String
+  state     String
+  pincode   String
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id               Int         @id @default(autoincrement())
+  name             String
+  description      String      @db.Text
+  shortDescription String?
+  price            Int
+  discount         Int?
+  stock            Int
+  category         String
+  imageUrl         String
+  badge            String?
+  sku              String?
+  isFeatured       Boolean     @default(false)
+  orderItems       OrderItem[]
+  reviews          Review[]
+  createdAt        DateTime    @default(now())
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     OrderItem[]
+  status    String   @default("pending")
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int
+  comment   String?  @db.Text
+  photos    String?  @db.Text
+  video     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}

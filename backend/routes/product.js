@@ -1,0 +1,250 @@
+
+import express from "express";
+import prisma from "../prisma/client.js";
+import auth from "../middleware/authMiddleware.js";
+import upload from "../utils/multer.js";
+import cloudinary from "../utils/cloudinary.js";
+
+const router = express.Router();
+
+router.post("/", auth, upload.single("image"), async (req, res) => {
+  try {
+    const { name, description, shortDescription, price, stock, category, badge, discount, sku, isFeatured } = req.body;
+    let imageUrl = "";
+
+    if (req.file) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "presento_products", resource_type: "auto" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+        imageUrl = result.secure_url;
+      } catch (cloudinaryError) {
+        console.error("Cloudinary upload error:", cloudinaryError);
+        return res.status(500).json({ error: "Image upload failed: " + cloudinaryError.message });
+      }
+    }
+
+    if (discount && (discount < 0 || discount > 100)) {
+      return res.status(400).json({ error: "Discount must be between 0 and 100" });
+    }
+
+    const productData = {
+      name,
+      description,
+      price: Number(price),
+      stock: Number(stock),
+      category,
+      imageUrl,
+      isFeatured: isFeatured === "true" || isFeatured === true,
+    };
+
+    if (shortDescription) {
+      productData.shortDescription = shortDescription;
+    }
+
+    if (discount) {
+      productData.discount = Number(discount);
+    }
+
+    if (sku) {
+      productData.sku = sku;
+    }
+
+    if (badge) {
+      productData.badge = badge;
+    }
+
+    const product = await prisma.product.create({
+      data: productData,
+    });
+
+    res.status(201).json(product);
+  } catch (err) {
+    console.error("Product create error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const [products, totalProducts] = await Promise.all([
+      prisma.product.findMany({
+        orderBy: { createdAt: "desc" },
+        skip: skip,
+        take: limit,
+      }),
+      prisma.product.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.json({
+      products,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    });
+  } catch (err) {
+    console.error("Products fetch error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await prisma.product.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    res.json(product);
+  } catch (err) {
+    console.error("Fetch product error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/:id", auth, upload.single("image"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, shortDescription, price, stock, category, badge, discount, sku, isFeatured } = req.body;
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (discount && (discount < 0 || discount > 100)) {
+      return res.status(400).json({ error: "Discount must be between 0 and 100" });
+    }
+
+    let imageUrl = existingProduct.imageUrl;
+
+    if (req.file) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "presento_products", resource_type: "auto" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+        imageUrl = result.secure_url;
+      } catch (cloudinaryError) {
+        console.error("Cloudinary upload error:", cloudinaryError);
+        return res.status(500).json({ error: "Image upload failed: " + cloudinaryError.message });
+      }
+    }
+
+    const updateData = {
+      name,
+      description,
+      shortDescription: shortDescription || null,
+      price: Number(price),
+      stock: Number(stock),
+      category,
+      imageUrl,
+      badge: badge || null,
+      discount: discount ? Number(discount) : null,
+      sku: sku || null,
+      isFeatured: isFeatured === "true" || isFeatured === true,
+    };
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+
+    console.log("✅ Product updated:", updatedProduct.name, "(ID:", id, ")");
+    res.json(updatedProduct);
+  } catch (err) {
+    console.error("Product update error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const productId = parseInt(id);
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    await prisma.orderItem.deleteMany({
+      where: { productId: productId },
+    });
+
+    await prisma.product.delete({
+      where: { id: productId },
+    });
+
+    console.log("✅ Product deleted:", product.name, "(ID:", id, ") - Removed from",);
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+      deletedProductId: productId,
+    });
+  } catch (err) {
+    console.error("Product delete error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/:id/stock", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+
+    if (stock === undefined || stock === null) {
+      return res.status(400).json({ error: "Stock amount is required" });
+    }
+
+    const stockNum = parseInt(stock);
+    if (isNaN(stockNum) || stockNum < 0) {
+      return res.status(400).json({ error: "Stock must be a non-negative number" });
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: { stock: stockNum },
+    });
+
+    console.log("✅ Stock updated for", product.name, "- New stock:", stockNum);
+    res.json({ success: true, message: "Stock updated successfully", product: updatedProduct });
+  } catch (err) {
+    console.error("Stock update error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
