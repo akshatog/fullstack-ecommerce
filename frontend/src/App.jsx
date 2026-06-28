@@ -14,7 +14,7 @@ import CartPage from "./pages/Cart.jsx";
 import ProductDetails from "./pages/ProductDetails.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import AppLayout from "./components/AppLayout.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ProtectedRoute, { AdminRoute } from "./components/ProtectedRoute.jsx";
 
 function App() {
   return (
@@ -25,18 +25,18 @@ function App() {
       <Route
         path="/admin/products"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <Products />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
 
       <Route
         path="/admin/products/edit/:id"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <EditProduct />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
 

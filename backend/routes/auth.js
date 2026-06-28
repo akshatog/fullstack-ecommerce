@@ -9,7 +9,6 @@ dotenv.config();
 const router = express.Router();
 
 router.post("/login", async (req, res) => {
-    console.log("Login route accessed");
     const { email, password } = req.body;
     try {
         const user = await prisma.user.findUnique({
@@ -23,7 +22,11 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(
+            { userId: user.id, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
 
         return res.json({
             message: "Login successful",
@@ -31,17 +34,17 @@ router.post("/login", async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                isAdmin: user.isAdmin
             }
         })
     } catch (error) {
-        console.log("Error during login:", error);
+        console.error("Error during login:", error);
         return res.status(500).json({ message: "Server error" });
     }
 })
 
 router.post("/signup", async (req, res) => {
-    console.log("Signup route accessed");
     const { name, email, password } = req.body;
     try {
         const existingUser = await prisma.user.findUnique({
@@ -60,7 +63,11 @@ router.post("/signup", async (req, res) => {
             }
         })
 
-        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(
+            { userId: newUser.id, isAdmin: false },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
 
         return res.json({
             message: "Signup successful",
@@ -68,16 +75,13 @@ router.post("/signup", async (req, res) => {
             user: {
                 id: newUser.id,
                 email: newUser.email,
-                name: newUser.name
+                name: newUser.name,
+                isAdmin: false
             }
         })
     } catch (error) {
-        console.log("Error during signup:", error);
-        return res.status(500).json({
-            message: "Server error",
-            error: error.message,
-            stack: error.stack
-        })
+        console.error("Error during signup:", error);
+        return res.status(500).json({ message: "Server error" })
     }
 })
 

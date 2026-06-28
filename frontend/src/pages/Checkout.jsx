@@ -156,6 +156,25 @@ export default function Checkout() {
       setError("Please fill in all customer details before continuing.");
       return false;
     }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(details.phone.replace(/\s+/g, ""))) {
+      setError("Please enter a valid 10-digit Indian mobile number (starting with 6–9).");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(details.email.trim())) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
+
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(details.pincode.trim())) {
+      setError("Please enter a valid 6-digit pincode.");
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -238,7 +257,6 @@ export default function Checkout() {
         <section className="checkout-summary">
           <h2>Items in your cart</h2>
           <div className="checkout-items">
-            <div className="checkout-items">
               {selectedItems.map((item) => (
                 <div key={item.id} className="checkout-item">
                   <div className="checkout-item-main">
@@ -255,7 +273,6 @@ export default function Checkout() {
                   </div>
                 </div>
               ))}
-            </div>
           </div>
           <div className="checkout-totals">
             <div className="checkout-row">

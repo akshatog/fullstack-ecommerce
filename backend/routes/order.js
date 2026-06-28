@@ -1,11 +1,13 @@
 import express from "express";
 import prisma from "../prisma/client.js";
 import auth from "../middleware/authMiddleware.js";
+import adminMiddleware from "../middleware/adminMiddleware.js";
 import { sendOrderEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
-router.get("/", auth, async (req, res) => {
+// GET all orders — admin only
+router.get("/", auth, adminMiddleware, async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
@@ -120,20 +122,6 @@ router.post("/", auth, async (req, res) => {
       if (!item.productId || !item.quantity || item.quantity <= 0) {
         return res.status(400).json({ error: "Each item must have productId and quantity > 0" });
       }
-
-      const product = await prisma.product.findUnique({
-        where: { id: parseInt(item.productId) },
-      });
-
-      if (!product) {
-        return res.status(404).json({ error: `Product ${item.productId} not found` });
-      }
-
-      if (product.stock < item.quantity) {
-        return res.status(400).json({
-          error: `Insufficient stock for product "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`,
-        });
-      }
     }
 
     const customerMessage = customerDetails
@@ -152,52 +140,59 @@ router.post("/", auth, async (req, res) => {
         .join("\n")
       : "Order received and confirmed";
 
-    const order = await prisma.order.create({
-      data: {
-        userId: parseInt(userId),
-        status: "pending",
-        message: customerMessage,
-        items: {
-          create: items.map((item) => ({
-            productId: parseInt(item.productId),
-            quantity: parseInt(item.quantity),
-            price: item.price || 0,
-          })),
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Use a transaction so stock check + decrement is atomic — prevents race conditions
+    const order = await prisma.$transaction(async (tx) => {
+      // Validate stock for every item inside the transaction
+      for (const item of items) {
+        const product = await tx.product.findUnique({
+          where: { id: parseInt(item.productId) },
+        });
+
+        if (!product) {
+          throw new Error(`Product ${item.productId} not found`);
+        }
+
+        if (product.stock < item.quantity) {
+          throw new Error(
+            `Insufficient stock for "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`
+          );
+        }
+      }
+
+      // Create the order
+      const newOrder = await tx.order.create({
+        data: {
+          userId: parseInt(userId),
+          status: "pending",
+          message: customerMessage,
+          items: {
+            create: items.map((item) => ({
+              productId: parseInt(item.productId),
+              quantity: parseInt(item.quantity),
+              price: item.price || 0,
+            })),
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                imageUrl: true,
-              },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          items: {
+            include: {
+              product: { select: { id: true, name: true, price: true, imageUrl: true } },
             },
           },
         },
-      },
-    });
-
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: parseInt(item.productId) },
-        data: {
-          stock: {
-            decrement: parseInt(item.quantity),
-          },
-        },
       });
-    }
+
+      // Decrement stock inside the same transaction
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: parseInt(item.productId) },
+          data: { stock: { decrement: parseInt(item.quantity) } },
+        });
+      }
+
+      return newOrder;
+    });
 
     sendOrderEmail(order).catch((emailErr) =>
       console.error("Order email error:", emailErr)
@@ -206,11 +201,14 @@ router.post("/", auth, async (req, res) => {
     res.status(201).json(order);
   } catch (err) {
     console.error("Create order error:", err);
-    res.status(500).json({ error: err.message });
+    // Surface stock/not-found errors as 400, everything else as 500
+    const isClientError = err.message.includes("not found") || err.message.includes("Insufficient stock");
+    res.status(isClientError ? 400 : 500).json({ error: err.message });
   }
 });
 
-router.put("/:orderId", auth, async (req, res) => {
+// Update order status — admin only
+router.put("/:orderId", auth, adminMiddleware, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, message } = req.body;

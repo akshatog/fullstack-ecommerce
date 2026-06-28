@@ -2,12 +2,14 @@
 import express from "express";
 import prisma from "../prisma/client.js";
 import auth from "../middleware/authMiddleware.js";
+import adminMiddleware from "../middleware/adminMiddleware.js";
 import upload from "../utils/multer.js";
 import cloudinary from "../utils/cloudinary.js";
 
 const router = express.Router();
 
-router.post("/", auth, upload.single("image"), async (req, res) => {
+// Create product — admin only
+router.post("/", auth, adminMiddleware, upload.single("image"), async (req, res) => {
   try {
     const { name, description, shortDescription, price, stock, category, badge, discount, sku, isFeatured } = req.body;
     let imageUrl = "";
@@ -120,7 +122,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", auth, upload.single("image"), async (req, res) => {
+// Update product — admin only
+router.put("/:id", auth, adminMiddleware, upload.single("image"), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, shortDescription, price, stock, category, badge, discount, sku, isFeatured } = req.body;
@@ -185,7 +188,8 @@ router.put("/:id", auth, upload.single("image"), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth, async (req, res) => {
+// Delete product — admin only
+router.delete("/:id", auth, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const productId = parseInt(id);
@@ -217,7 +221,8 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
-router.put("/:id/stock", auth, async (req, res) => {
+// Update stock — admin only
+router.put("/:id/stock", auth, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { stock } = req.body;
