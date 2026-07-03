@@ -26,15 +26,6 @@ function App() {
       <Route path="/signup" element={<Signup />} />
 
       <Route
-        path="/admin/products"
-        element={
-          <AdminRoute>
-            <Products />
-          </AdminRoute>
-        }
-      />
-
-      <Route
         path="/admin/products/edit/:id"
         element={
           <AdminRoute>
@@ -55,6 +46,14 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<UserProducts defaultTab="products" />} />
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <Products />
+            </AdminRoute>
+          }
+        />
         <Route path="/contact" element={<Contact />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/about" element={<AboutUs />} />

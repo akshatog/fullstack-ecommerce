@@ -1,49 +1,17 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import "../styles/ProductCard.css";
-
 import { optimizeImageUrl } from "../utils/imageUtils";
+import "../styles/ProductCardUser.css";
 
 function ProductCard({ product, onOrderClick, loading, isAdmin, onProductDeleted, onStockUpdated }) {
-  const [quantity, setQuantity] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showStockInput, setShowStockInput] = useState(false);
   const [newStock, setNewStock] = useState(product.stock);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value) || 1;
-    setQuantity(Math.min(Math.max(value, 1), product.stock));
-  };
-
-  const handleIncrement = () => {
-    setQuantity((prev) => Math.min(prev + 1, product.stock));
-  };
-
-  const handleDecrement = () => {
-    setQuantity((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handlePlaceOrder = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login", { state: { from: location } });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      await onOrderClick(product.id, quantity);
-    } finally {
-      setIsProcessing(false);
-      setQuantity(1);
-    }
-  };
-
-  const handleDeleteProduct = async () => {
+  const handleDeleteProduct = async (e) => {
+    e.stopPropagation();
     if (!window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
       return;
     }
@@ -65,7 +33,8 @@ function ProductCard({ product, onOrderClick, loading, isAdmin, onProductDeleted
     }
   };
 
-  const handleUpdateStock = async () => {
+  const handleUpdateStock = async (e) => {
+    e.stopPropagation();
     const stockNum = parseInt(newStock);
     if (isNaN(stockNum) || stockNum < 0) {
       alert("Please enter a valid stock amount");
@@ -94,137 +63,85 @@ function ProductCard({ product, onOrderClick, loading, isAdmin, onProductDeleted
   };
 
   const isOutOfStock = product.stock === 0;
-  const isDisabled = isOutOfStock || loading || isProcessing;
 
   return (
-    <div className="product-card-user">
-      <div className="product-image-wrapper">
+    <div className="ha-product-card">
+      <div className="ha-product-image-wrapper">
         <img
           src={optimizeImageUrl(product.imageUrl, 400)}
           alt={product.name}
-          className="product-image"
+          className="ha-product-image"
           loading="lazy"
-
         />
-        <div className={`product-badge ${isOutOfStock ? "out-of-stock" : "in-stock"}`}>
-          {isOutOfStock ? "Out of Stock" : "In Stock"}
-        </div>
-        {!isOutOfStock && (
-          <div className="stock-count">
-            Stock: <strong>{product.stock}</strong>
-          </div>
-        )}
-        {isOutOfStock && isAdmin && (
-          <div className="stock-count admin">
-            <button
-              onClick={() => setShowStockInput(!showStockInput)}
-              className="btn-add-stock"
-              title="Add stock"
-            >
-              ➕ Add Stock
-            </button>
+
+        {isOutOfStock ? (
+          <div className="ha-product-badge out-of-stock">Sold Out</div>
+        ) : (
+          <div className="ha-product-badge" style={{ background: 'var(--accent-sage)', color: 'white' }}>
+            Stock: {product.stock}
           </div>
         )}
       </div>
 
-      <div className="product-content">
-        <div className="product-header">
-          <h3 className="product-name">{product.name}</h3>
-          {isAdmin && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                className="btn-edit-product"
-                title="Edit product"
-              >
-                ✏️ Edit
-              </button>
-              <button
-                onClick={handleDeleteProduct}
-                disabled={isDeleting}
-                className="btn-delete-product"
-                title="Delete product"
-              >
-                {isDeleting ? "..." : "🗑️"}
-              </button>
-            </div>
-          )}
-        </div>
-        <p className="product-description">{product.description}</p>
+      <div className="ha-product-info">
+        <h3 className="ha-product-name">{product.name}</h3>
+        <span className="ha-product-price">₹ {product.price.toLocaleString("en-IN")}</span>
 
-        <div className="product-footer">
-          <div className="product-price">₹{product.price}</div>
-          <div className="product-category">{product.category}</div>
-        </div>
-
-        {!isOutOfStock && !isAdmin && (
-          <div className="quantity-section">
-            <label>Quantity:</label>
-            <div className="quantity-selector">
-              <button
-                onClick={handleDecrement}
-                disabled={isDisabled || quantity === 1}
-                className="qty-btn"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                min="1"
-                max={product.stock}
-                value={quantity}
-                onChange={handleQuantityChange}
-                disabled={isDisabled}
-                className="qty-input"
-              />
-              <button
-                onClick={handleIncrement}
-                disabled={isDisabled || quantity === product.stock}
-                className="qty-btn"
-              >
-                +
-              </button>
-            </div>
-            <span className="qty-limit">Max: {product.stock}</span>
+        {isAdmin && showStockInput && (
+          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+            <input
+              type="number"
+              value={newStock}
+              onChange={(e) => setNewStock(e.target.value)}
+              style={{ width: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--gray-300)' }}
+              min="0"
+            />
+            <button onClick={handleUpdateStock} className="ha-btn-pill ha-btn-solid" style={{ padding: '0.5rem 1rem' }}>
+              Save
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); setShowStockInput(false); }} className="ha-btn-pill ha-btn-outline" style={{ padding: '0.5rem 1rem' }}>
+              Cancel
+            </button>
           </div>
         )}
 
-        {isAdmin && isOutOfStock && showStockInput && (
-          <div className="stock-input-section">
-            <label>New Stock Amount:</label>
-            <div className="stock-input-group">
-              <input
-                type="number"
-                min="0"
-                value={newStock}
-                onChange={(e) => setNewStock(e.target.value)}
-                placeholder="Enter stock amount"
-                className="stock-input"
-              />
-              <button onClick={handleUpdateStock} className="btn-confirm-stock">
-                ✓
-              </button>
+        {isAdmin && !showStockInput && (
+          <div className="ha-product-actions" style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="ha-btn-pill ha-btn-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/admin/products/edit/${product.id}`);
+              }}
+            >
+              Edit
+            </button>
+            
+            <button
+              type="button"
+              className="ha-btn-pill ha-btn-outline"
+              style={{ color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
+              disabled={isDeleting}
+              onClick={handleDeleteProduct}
+            >
+              {isDeleting ? "..." : "Delete"}
+            </button>
+
+            {isOutOfStock && (
               <button
-                onClick={() => {
-                  setShowStockInput(false);
-                  setNewStock(product.stock);
+                type="button"
+                className="ha-btn-pill ha-btn-solid"
+                style={{ gridColumn: '1 / -1' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowStockInput(true);
                 }}
-                className="btn-cancel-stock"
               >
-                ✕
+                + Add Stock
               </button>
-            </div>
+            )}
           </div>
-        )}
-
-        {!isAdmin && (
-          <button
-            onClick={handlePlaceOrder}
-            disabled={isDisabled}
-            className={`btn-order ${isDisabled ? "disabled" : ""}`}
-          >
-            {isProcessing ? "Placing Order..." : isOutOfStock ? "Out of Stock" : "🛒 Place Order"}
-          </button>
         )}
       </div>
     </div>
@@ -232,4 +149,3 @@ function ProductCard({ product, onOrderClick, loading, isAdmin, onProductDeleted
 }
 
 export default React.memo(ProductCard);
-

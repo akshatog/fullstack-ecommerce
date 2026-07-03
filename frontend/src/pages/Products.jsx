@@ -5,7 +5,7 @@ import AddProductForm from "../components/AddProductForm";
 import OrderTrackingModal from "../components/OrderTrackingModal";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
-import "./AdminProducts.css";
+import "./products.css";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -17,22 +17,12 @@ export default function Products() {
   const { fetchProducts } = useProducts();
 
   useEffect(() => {
-    console.log('🏢 Admin Products page mounted');
-
     const adminFlag = localStorage.getItem("isAdmin") === "true";
-    console.log('👤 Admin status check:', {
-      isAdminFromStorage: localStorage.getItem("isAdmin"),
-      parsedAsBoolean: adminFlag,
-      token: localStorage.getItem("token") ? 'Present' : 'Missing',
-      user: localStorage.getItem("user") ? 'Present' : 'Missing'
-    });
     setIsAdmin(adminFlag);
 
     async function load() {
       try {
-        console.log('📦 Fetching products...');
         const response = await fetchProducts(1, 1000);
-        console.log('✅ Products fetched:', response.products?.length || response.length, 'items');
         setProducts(response.products || response);
       } catch (err) {
         console.error("❌ Products fetch error:", err);
@@ -86,58 +76,58 @@ export default function Products() {
 
   if (loading) {
     return (
-      <div className="products-container">
-        <div className="loading">Loading products...</div>
+      <div className="ha-products-page">
+        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--gray-500)' }}>Loading dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="products-page">
-      <header className="products-header">
-        <div className="header-top">
-          <button onClick={handleLogout} className="btn-logout">
+    <div className="ha-products-page">
+      <div className="page-title-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-heading)', color: 'var(--gray-900)' }}>
+              {isAdmin ? "Admin Dashboard" : "Products Showcase"}
+            </h2>
+            <p style={{ color: 'var(--gray-500)', marginTop: '0.5rem', fontSize: '1.1rem' }}>
+              {isAdmin
+                ? "Manage your product catalog and track orders."
+                : "Discover our latest beautiful collection."}
+            </p>
+          </div>
+          
+          <button onClick={handleLogout} className="ha-btn-pill ha-btn-outline" style={{ color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}>
             Logout
           </button>
         </div>
-        <div className="header-content">
-          <div className="header-left">
-            <h1>
-              {isAdmin ? "👨‍💼 Admin Dashboard" : "✨ Products Showcase"}
-            </h1>
-            <p>
-              {isAdmin
-                ? "Manage products and track orders"
-                : "Discover our latest beautiful collection"}
-            </p>
+
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/admin/analytics" className="ha-btn-pill ha-btn-outline">
+              📊 Analytics
+            </Link>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="ha-btn-pill ha-btn-solid"
+            >
+              {showAddForm ? "✕ Close Form" : "➕ Add Product"}
+            </button>
+            <button
+              onClick={() => setShowOrderModal(true)}
+              className="ha-btn-pill ha-btn-outline"
+            >
+              📦 Track Orders
+            </button>
           </div>
-          {isAdmin && (
-            <div className="header-actions">
-              <Link
-                to="/admin/analytics"
-                className="btn-analytics"
-              >
-                📊 Analytics
-              </Link>
-              <button
-                onClick={() => setShowAddForm(!showAddForm)}
-                className="btn-add-product"
-              >
-                {showAddForm ? "✕ Close" : "➕ Add Product"}
-              </button>
-              <button
-                onClick={() => setShowOrderModal(true)}
-                className="btn-track-orders"
-              >
-                📦 Track Orders
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+        )}
+      </div>
 
       {isAdmin && showAddForm && (
-        <AddProductForm onProductAdded={handleProductAdded} />
+        <div style={{ marginBottom: '2rem' }}>
+          <AddProductForm onProductAdded={handleProductAdded} />
+        </div>
       )}
 
       {isAdmin && (
@@ -147,43 +137,31 @@ export default function Products() {
         />
       )}
 
-      <div className="products-container">
-        {products.length === 0 ? (
-          <div className="no-products">
-            <p>
+      <div className="ha-shop-layout">
+        <div className="ha-shop-main-content">
+          {products.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--gray-500)', fontSize: '1.2rem' }}>
               {isAdmin
                 ? "No products yet. Click 'Add Product' to get started!"
                 : "No products found."}
-            </p>
-            {isAdmin && (
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="btn-primary"
-              >
-                Add Product
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="products-grid">
-            {products.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                isAdmin={isAdmin}
-                loading={loading}
-                onOrderClick={handleOrderClick}
-                onProductDeleted={handleProductDeleted}
-                onStockUpdated={handleStockUpdated}
-              />
-            ))}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="ha-products-grid">
+              {products.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  isAdmin={isAdmin}
+                  loading={loading}
+                  onOrderClick={handleOrderClick}
+                  onProductDeleted={handleProductDeleted}
+                  onStockUpdated={handleStockUpdated}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-
-      <footer className="admin-footer">
-        <p>&copy; {new Date().getFullYear()} Homaura. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

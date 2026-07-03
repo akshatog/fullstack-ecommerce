@@ -441,7 +441,7 @@ export default function UserProducts({ defaultTab = "products" }) {
           </aside>
 
           <div className="ha-shop-main-content">
-            <div className="ha-search-wrapper" style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
+            <div className="ha-search-wrapper" style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
               <div style={{ width: "100%", maxWidth: "540px" }}>
                 <SearchBar
                   products={products}

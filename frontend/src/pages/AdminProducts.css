@@ -189,7 +189,8 @@
   font-size: 0.95rem;
 }
 
-.products-grid {
+.products-grid,
+.ha-products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 2rem;

@@ -154,7 +154,7 @@
   gap: 2.5rem;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 1.5rem 3rem 4rem;
+  padding: 0.5rem 3rem 4rem; /* Reduced top padding from 1.5rem to 0.5rem */
 }
 
 /* ─────────────────────────────────────────

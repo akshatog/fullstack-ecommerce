@@ -46,20 +46,42 @@ export default function ProductGallery({ product, className = "" }) {
   const [lightboxIdx, setLightboxIdx] = useState(0);
   const autoplayRef = useRef(null);
 
-  // Rebuild when product changes
+  // Rebuild when product changes without causing unnecessary re-renders
   useEffect(() => {
-    setMedia(buildMedia());
-    setActiveIdx(0);
+    const newMedia = buildMedia();
+    setMedia(prev => {
+      if (prev.length !== newMedia.length) return newMedia;
+      for (let i = 0; i < prev.length; i++) {
+        if (prev[i].url !== newMedia[i].url) return newMedia;
+      }
+      return prev;
+    });
   }, [buildMedia]);
+
+  // Reset index only when product ID changes
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [product.id]);
 
   // Auto-slide every 3.5 s (images only, not video)
   const startAutoplay = useCallback(() => {
     if (autoplayRef.current) clearInterval(autoplayRef.current);
     autoplayRef.current = setInterval(() => {
       setActiveIdx((prev) => {
-        if (media[prev]?.type === "video") return prev; // Do not interrupt video
+        const currentMedia = media[prev];
+        if (currentMedia?.type === "video") {
+          return prev; // Do not auto-advance if currently on video
+        }
+        
         const imageCount = media.filter((m) => m.type === "image").length;
-        const next = (prev + 1) % (imageCount > 0 ? imageCount : media.length);
+        let next = (prev + 1) % (imageCount > 0 ? imageCount : media.length);
+        
+        // If the next item is a video, don't auto-slide into it. 
+        // Just loop back to the first image.
+        if (media[next]?.type === "video") {
+           next = 0;
+        }
+        
         return next;
       });
     }, 3500);
