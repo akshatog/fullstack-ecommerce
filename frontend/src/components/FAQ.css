@@ -1,6 +1,6 @@
 .faq-section {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, #fff 0%, #fef2f2 100%);
+    background: transparent;
 }
 
 .faq-container {
@@ -15,6 +15,7 @@
 
 .faq-header h2 {
     font-size: 2.5rem;
+    font-family: var(--font-heading);
     background: var(--gradient-text);
     background-clip: text;
     -webkit-background-clip: text;
@@ -24,7 +25,7 @@
 
 .faq-header p {
     font-size: 1.1rem;
-    color: var(--gray-600);
+    color: var(--gray-500);
 }
 
 .faq-list {
@@ -34,21 +35,22 @@
 }
 
 .faq-item {
-    background: white;
+    background: var(--color-card-bg);
     border-radius: var(--radius-lg);
-    border: 2px solid var(--gray-100);
+    border: 1px solid var(--color-border);
     overflow: hidden;
     transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .faq-item:hover {
-    border-color: rgba(236, 72, 153, 0.3);
-    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .faq-item.active {
-    border-color: var(--primary-pink);
-    box-shadow: 0 4px 20px rgba(236, 72, 153, 0.15);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .faq-question {
@@ -61,24 +63,25 @@
     align-items: center;
     cursor: pointer;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
+    font-family: var(--font-heading);
     color: var(--gray-900);
     text-align: left;
     transition: all 0.3s ease;
 }
 
 .faq-question:hover {
-    color: var(--primary-pink);
+    color: var(--color-primary);
 }
 
 .faq-item.active .faq-question {
-    color: var(--primary-pink);
+    color: var(--color-primary);
 }
 
 .faq-icon {
     flex-shrink: 0;
     transition: transform 0.3s ease;
-    color: var(--primary-pink);
+    color: var(--color-primary);
 }
 
 .faq-item.active .faq-icon {
@@ -97,9 +100,10 @@
 
 .faq-answer {
     padding: 0 2rem 1.5rem 2rem;
-    color: var(--gray-700);
+    color: var(--gray-600);
     line-height: 1.7;
     font-size: 1rem;
+    font-family: var(--font-body);
 }
 
 @media (max-width: 768px) {
@@ -145,7 +149,7 @@
 @media (max-width: 768px) {
     .faq-question {
         touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(236, 72, 153, 0.1);
+        -webkit-tap-highlight-color: rgba(92, 107, 71, 0.1);
         pointer-events: auto !important;
     }
 
