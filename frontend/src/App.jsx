@@ -19,6 +19,7 @@ import Analytics from "./pages/Analytics.jsx";
 import AboutUs from "./pages/AboutUs.jsx";
 import Inspiration from "./pages/Inspiration.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
 
 function App() {
   return (
@@ -63,6 +64,14 @@ function App() {
 
         <Route path="/products" element={<Navigate to="/shop" replace />} />
 
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <Wishlist />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/profile"
           element={

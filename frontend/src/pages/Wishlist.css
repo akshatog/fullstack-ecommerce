@@ -1,0 +1,99 @@
+.ha-wishlist-page {
+  min-height: calc(100vh - 80px);
+  background-color: var(--color-background);
+  padding: 4rem 2rem;
+}
+
+.ha-wishlist-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ha-wishlist-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ha-wishlist-title {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.ha-wishlist-subtitle {
+  color: var(--color-text-light);
+  font-size: 1.1rem;
+}
+
+.ha-wishlist-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.ha-wishlist-empty-icon {
+  font-size: 4rem;
+  color: var(--color-accent);
+  margin-bottom: 1.5rem;
+}
+
+.ha-wishlist-empty h2 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.ha-wishlist-empty p {
+  color: var(--color-text-light);
+  margin-bottom: 2rem;
+}
+
+.ha-wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
+}
+
+.ha-wishlist-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ha-wishlist-remove-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  transition: all 0.3s ease;
+}
+
+.ha-wishlist-remove-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .ha-wishlist-page {
+    padding: 2rem 1rem;
+  }
+  
+  .ha-wishlist-title {
+    font-size: 2.2rem;
+  }
+  
+  .ha-wishlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+}

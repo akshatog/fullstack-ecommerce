@@ -17,6 +17,7 @@ model User {
   orders    Order[]
   addresses Address[]
   reviews   Review[]
+  wishlists WishlistItem[]
   createdAt DateTime  @default(now())
 }
 
@@ -51,6 +52,7 @@ model Product {
   isFeatured       Boolean     @default(false)
   orderItems       OrderItem[]
   reviews          Review[]
+  wishlists        WishlistItem[]
   createdAt        DateTime    @default(now())
 }
 
@@ -89,6 +91,19 @@ model Review {
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+model WishlistItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([productId])

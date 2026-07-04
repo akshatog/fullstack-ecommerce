@@ -8,6 +8,7 @@ import orderRoutes from './routes/order.js';
 import addressRoutes from './routes/addressRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import analyticsRoutes from './routes/analytics.js';
+import wishlistRoutes from './routes/wishlist.js';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { useWishlist } from "../context/WishlistContext.jsx";
 import "../styles/ProductCardUser.css";
 import ProductImage from "./ProductImage";
 import { IMAGE_SIZES } from "../utils/imageUtils";
@@ -16,10 +18,12 @@ function ProductCardUser({
   onAddToCart = () => { },
   onViewDetails = () => { },
 }) {
+  const navigate = useNavigate();
   const { items, updateQuantity, removeFromCart } = useCart();
-  const [isWishlisted, setIsWishlisted] = useState(false); // Visual toggle for mockup matching
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const cartItem = items.find(item => item.id === product.id);
+  const isWishlisted = isInWishlist ? isInWishlist(product.id) : false;
 
   const handleIncrement = () => {
     if (cartItem && cartItem.quantity < product.stock) {
@@ -37,9 +41,18 @@ function ProductCardUser({
     }
   };
 
-  const toggleWishlist = (e) => {
+  const handleToggleWishlist = async (e) => {
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { state: { message: "Please log in to wishlist items." } });
+      return;
+    }
+    try {
+      await toggleWishlist(product.id);
+    } catch (err) {
+      console.error("Failed to toggle wishlist", err);
+    }
   };
 
   return (
@@ -59,7 +72,7 @@ function ProductCardUser({
         
         <button 
           className="ha-product-wishlist-btn" 
-          onClick={toggleWishlist}
+          onClick={handleToggleWishlist}
           aria-label="Toggle wishlist"
         >
           <HeartIcon filled={isWishlisted} />
